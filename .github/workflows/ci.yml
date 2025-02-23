@@ -20,8 +20,6 @@ jobs:
           - rust: 1.83.0 # MSRV
             features: serde
             experimental: false
-            # doctest of `ArrayVec::spare_capacity_mut` has MSRV 1.55
-            test-args: --skip spare_capacity_mut
           - rust: 1.85.0
             features: serde
             experimental: false
