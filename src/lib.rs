@@ -57,7 +57,6 @@ macro_rules! assert_capacity_limit_const {
     }
 }
 
-mod arrayvec_impl;
 mod arrayvec;
 mod array_string;
 mod char;
