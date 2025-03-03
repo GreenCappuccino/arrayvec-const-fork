@@ -393,11 +393,23 @@ impl<T, const CAP: usize> ArrayVec<T, CAP> {
     /// assert_eq!(array.swap_remove(1), 2);
     /// assert_eq!(&array[..], &[3]);
     /// ```
-    pub fn swap_remove(&mut self, index: usize) -> T {
-        self.swap_pop(index)
-            .unwrap_or_else(|| {
+    pub const fn swap_remove(&mut self, index: usize) -> T {
+        union Transmute<T> {
+            mo: ManuallyDrop<Option<T>>,
+            mom: ManuallyDrop<Option<ManuallyDrop<T>>>,
+        }
+        // Wouldn't need this with const_precise_live_drops :(
+        let v = ManuallyDrop::new(self.swap_pop(index));
+        let v = ManuallyDrop::into_inner(unsafe { Transmute{mo: v}.mom });
+
+        match v {
+            Some(v) => {
+                return ManuallyDrop::into_inner(v)
+            },
+            None => {
                 panic_oob!("swap_remove", index, self.len())
-            })
+            }
+        }
     }
 
     /// Remove the element at `index` and swap the last element into its place.
@@ -417,12 +429,12 @@ impl<T, const CAP: usize> ArrayVec<T, CAP> {
     ///
     /// assert_eq!(array.swap_pop(10), None);
     /// ```
-    pub fn swap_pop(&mut self, index: usize) -> Option<T> {
+    pub const fn swap_pop(&mut self, index: usize) -> Option<T> {
         let len = self.len();
         if index >= len {
             return None;
         }
-        self.swap(index, len - 1);
+        self.as_mut_slice().swap(index, len - 1);
         self.pop()
     }
 
