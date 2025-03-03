@@ -1,9 +1,9 @@
 
 arrayvec
 ========
-[![Crates.io: arrayvec](https://img.shields.io/crates/v/arrayvec.svg)](https://crates.io/crates/arrayvec)
-[![Documentation](https://docs.rs/arrayvec/badge.svg)](https://docs.rs/arrayvec)
-[![Build Status](https://github.com/bluss/arrayvec/workflows/Continuous%20integration/badge.svg?branch=master)](https://github.com/bluss/arrayvec/actions)
+[![Crates.io: arrayvec-const](https://img.shields.io/crates/v/arrayvec-const.svg)](https://crates.io/crates/arrayvec-const)
+[![Documentation](https://docs.rs/arrayvec-const/badge.svg)](https://docs.rs/arrayvec-const)
+[![Build Status](https://github.com/Daniel-Aaron-Bloom/arrayvec/workflows/Continuous%20integration/badge.svg?branch=master)](https://github.com/Daniel-Aaron-Bloom/arrayvec/actions)
 
 
 
@@ -14,7 +14,7 @@ OR
 
 A vector with fixed capacity.
 
-Please read the [`API documentation here`](https://docs.rs/arrayvec)
+Please read the [`API documentation here`](https://docs.rs/arrayvec-const/)
 
 # License
 
