@@ -17,6 +17,7 @@ use std::io;
 use std::mem::ManuallyDrop;
 use std::mem::MaybeUninit;
 
+use const_panic::concat_panic;
 #[cfg(feature="serde")]
 use serde::{Serialize, Deserialize, Serializer, Deserializer};
 
@@ -53,10 +54,10 @@ impl<T, const CAP: usize> Drop for ArrayVec<T, CAP> {
     }
 }
 
+
 macro_rules! panic_oob {
     ($method_name:expr, $index:expr, $len:expr) => {
-        panic!(concat!("ArrayVec::", $method_name, ": index {} is out of bounds in vector of length {}"),
-               $index, $len)
+        concat_panic!("ArrayVec::", $method_name, ": index ", $index, " is out of bounds in vector of length ", $len)
     }
 }
 
@@ -322,7 +323,7 @@ impl<T, const CAP: usize> ArrayVec<T, CAP> {
     /// assert_eq!(&array[..], &["y", "x"]);
     ///
     /// ```
-    pub fn try_insert(&mut self, index: usize, element: T) -> Result<(), CapacityError<T>> {
+    pub const fn try_insert(&mut self, index: usize, element: T) -> Result<(), CapacityError<T>> {
         if index > self.len() {
             panic_oob!("try_insert", index, self.len())
         }
@@ -440,11 +441,23 @@ impl<T, const CAP: usize> ArrayVec<T, CAP> {
     /// assert_eq!(removed_elt, 1);
     /// assert_eq!(&array[..], &[2, 3]);
     /// ```
-    pub fn remove(&mut self, index: usize) -> T {
-        self.pop_at(index)
-            .unwrap_or_else(|| {
+    pub const fn remove(&mut self, index: usize) -> T {
+        union Transmute<T> {
+            mo: ManuallyDrop<Option<T>>,
+            mom: ManuallyDrop<Option<ManuallyDrop<T>>>,
+        }
+        // Wouldn't need this with const_precise_live_drops :(
+        let v = ManuallyDrop::new(self.pop_at(index));
+        let v = ManuallyDrop::into_inner(unsafe { Transmute{mo: v}.mom });
+        
+        match v {
+            Some(v) => {
+                return ManuallyDrop::into_inner(v)
+            },
+            None => {
                 panic_oob!("remove", index, self.len())
-            })
+            }
+        }
     }
 
     /// Remove the element at `index` and shift down the following elements.
@@ -463,11 +476,26 @@ impl<T, const CAP: usize> ArrayVec<T, CAP> {
     /// assert!(array.pop_at(2).is_none());
     /// assert!(array.pop_at(10).is_none());
     /// ```
-    pub fn pop_at(&mut self, index: usize) -> Option<T> {
-        if index >= self.len() {
-            None
-        } else {
-            self.drain(index..index + 1).next()
+    pub const fn pop_at(&mut self, index: usize) -> Option<T> {
+        let len = self.len();
+        if index >= len {
+            return None
+        }
+        
+        unsafe { // infallible
+            // The spot to put take the value
+            let element = {
+                let p: *mut _ = self.get_unchecked_ptr(index);
+                // Read it out, the first copy of the `index`th
+                // element.
+                let element = ptr::read(p);
+                // Shift everything over to compact space. (overwriting the
+                // `index`th element)
+                ptr::copy(p.offset(1), p, len - index - 1);
+                element
+            };
+            self.set_len(len - 1);
+            Some(element)
         }
     }
 

@@ -15,6 +15,9 @@ categories = ["data-structures", "no-std"]
 
 [build-dependencies]
 
+[dependencies]
+const_panic = "0.2.12"
+
 [dependencies.borsh]
 version = "1.2.0"
 optional = true
