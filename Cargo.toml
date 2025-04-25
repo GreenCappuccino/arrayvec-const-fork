@@ -49,7 +49,7 @@ name = "arraystring"
 harness = false
 
 [features]
-default = ["std"]
+default = []
 std = []
 
 [profile.bench]
